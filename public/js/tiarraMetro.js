@@ -5,20 +5,14 @@ $(function(){
    */
   function getHumanFriendlyTime(secondOffset) {
     if (secondOffset < 5)
-      return "moments ago.";
-    else if (secondOffset < 50)
-      return secondOffset + " seconds ago";
-    else if (secondOffset < 150)
-      return "about a minute ago";
+      return "now";
+    else if (secondOffset < 60)
+      return secondOffset + "s";
     else if (secondOffset < 60 * 60)
-      return parseInt(secondOffset / 60) + " minutes ago";
-    else if (secondOffset < 2 * 60 * 60)
-      return "about an hour ago";
+      return parseInt(secondOffset / 60) + "m";
     else if (secondOffset < 24 * 60 * 60)
-      return parseInt(secondOffset / 60 / 60) + " hours ago";
-    else if (secondOffset < 2 * 24 * 60 * 60)
-      return "about a day ago";
-    return parseInt(secondOffset / 24 / 60 / 60) + " days ago";
+      return parseInt(secondOffset / 60 / 60) + "h";
+    return parseInt(secondOffset / 24 / 60 / 60) + "d";
   }
   /*
    * Interval of updating the formatted time string on each post.
