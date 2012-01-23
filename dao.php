@@ -227,7 +227,7 @@ class dao_log extends dao_base{
 					log.id as id, 
 					nick.name as nick, 
 					log.log as log, 
-					log.created_on as time, 
+					UNIX_TIMESTAMP(log.created_on) as time, 
 					log.is_notice as is_notice 
 				FROM log 
 					JOIN nick ON log.nick_id = nick.id 
@@ -254,7 +254,7 @@ class dao_log extends dao_base{
 					log.id as id , 
 					nick.name as nick, 
 					log.log as log, 
-					log.created_on as time,
+					UNIX_TIMESTAMP(log.created_on) as time,
 					log.is_notice as is_notice 
 				FROM log 
 					JOIN nick ON log.nick_id = nick.id 

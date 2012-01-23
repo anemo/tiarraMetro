@@ -75,7 +75,9 @@
 		public function api_logs( ){
 			if( !$this->isLoggedIn() ){ $return = array( 'error' => true, 'msg' => 'no login.' ); }
 			else{
-				$return = array( 'error'=> false, 'update'=>false,'checktime'=>date("Y-m-d H:i:s") );
+				$return = array(
+            'error' => false, 'update' => false,
+            'checktime' => date("Y-m-d H:i:s"), 'unixtime' => time() );
 
 				if( !empty($this->request->max_id) ){
 					$logs = $this->getLogs($this->request->current,$this->request->max_id);

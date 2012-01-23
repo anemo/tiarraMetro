@@ -1,4 +1,29 @@
 $(function(){
+  /*
+   * Returns the human-friendly formatted time string.
+   * @param {integer} seconds
+   */
+  function getHumanFriendlyTime(secondOffset) {
+    if (secondOffset < 5)
+      return "moments ago.";
+    else if (secondOffset < 50)
+      return secondOffset + " seconds ago";
+    else if (secondOffset < 150)
+      return "about a minute ago";
+    else if (secondOffset < 60 * 60)
+      return parseInt(secondOffset / 60) + " minutes ago";
+    else if (secondOffset < 2 * 60 * 60)
+      return "about an hour ago";
+    else if (secondOffset < 24 * 60 * 60)
+      return parseInt(secondOffset / 60 / 60) + " hours ago";
+    else if (secondOffset < 2 * 24 * 60 * 60)
+      return "about a day ago";
+    return parseInt(secondOffset / 24 / 60 / 60) + " days ago";
+  }
+  /*
+   * Interval of updating the formatted time string on each post.
+   */
+  var TIME_UPDATE_INTERVAL = 1000;
 
 	$.escapeHTML = function(val) {
 		return $("<div />").text(val).html();
@@ -372,9 +397,12 @@ $(function(){
 				}
 				self.updateStatusNotifier();
 			});
+
+      setTimeout(this.updateTime.bind(this), TIME_UPDATE_INTERVAL);
 			
 			self.updateStatusNotifier();
-		},
+		},  // tiarraMetroClass.htmlInitialize
+
 		keymappingInitialize: function( keymapping ){
 			var self = this;
 			if( keymapping ){
@@ -513,17 +541,20 @@ $(function(){
 			self.updating = true;
 
 			$.ajax({
-				url:self.mountPoint+'/api/logs/',
-				dataType:'json',
-				type:'POST',
-				data:{
-					max_id:self.max_id,
+				url: self.mountPoint+'/api/logs/',
+				dataType: 'json',
+				type: 'POST',
+				data: {
+					max_id: self.max_id,
 					current: self.isCurrentPivotByName("list") ? "" : self.currentChannel
 				},
-				success:function(json){
+				success: function(json) {
+          var clientTime = parseInt(+new Date / 1000);  // Gets unixtime.
+          self.timeOffset_ = clientTime - json['unixtime'];
+
 					if( json['update'] ){
 						$.each( json['logs'], function(channel_id, logs){
-							
+
 							//新しいチャンネルの場合
 							if(! $('#ch_'+channel_id).length ){
 								$('ul.channel_list').prepend('<li id="ch_'+channel_id+'" ><span class="ch_name">new channel</span>&nbsp;'+'<span class="ch_num"></span></li>');
@@ -660,15 +691,20 @@ $(function(){
 			var result =  '<div id="'+log.id+'" type="'+(log.is_notice == 1?'notice':'privmsg')+'" class="line text" nick="'+log.nick+'" alternate="'+(self.variable.alternate?'odd':'even')+'" highlight="'+(log.pickup?'true':'false')+'" >';
 			searchFlag = (searchFlag==undefined?false:searchFlag);
 			/* 検索の場合はチャンネルも記述する */
+      var time, unixtime;
 			if( searchFlag ){
 				result += '<span class="channel">'+log.channel_name+'</span>';
-				time = log.time.substring(log.time.indexOf('-')+1,log.time.lastIndexOf(' '))+' '+log.time.substring(log.time.indexOf(' ')+1,log.time.lastIndexOf(':'));
+				time = log.time.substring(log.time.indexOf('-') + 1, log.time.lastIndexOf(' ')) + ' ' + 
+               log.time.substring(log.time.indexOf(' ')+1,log.time.lastIndexOf(':'));
 			}else{
-				time = log.time.substring(log.time.indexOf(' ')+1,log.time.lastIndexOf(':'));
+        var currentTime = parseInt(+new Date / 1000);  // Gets the current unixtime.
+        var offset = self.timeOffset_ || 0;
+        unixtime = parseInt(log.time) + offset;
+        time = getHumanFriendlyTime(currentTime - unixtime);
 			}
 
 			//time
-			result += '<span class="time">'+time+'</span>';
+			result += '<span class="time" time="' + unixtime + '">' + time + '</span>';
 
 			//icon
 			result += self.getIconString(log);
@@ -776,6 +812,13 @@ $(function(){
 			}
 			return result;
 		},
+    updateTime: function() {
+      var currentTime = parseInt(+new Date / 1000);  // Gets the current unixtime.
+      $("span.time").each(function(i, elem){
+          var unixtime = parseInt(elem.getAttribute('time'));
+          elem.textContent = getHumanFriendlyTime(currentTime - unixtime); });
+      setTimeout(this.updateTime.bind(this), TIME_UPDATE_INTERVAL);
+    },
 		getIconString : function ( log ){
 			nick = log.nick;
 			if( this.jsConf['alias'] && nick in this.jsConf['alias'] ){ nick = this.jsConf['alias'][ nick ]; }
