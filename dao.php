@@ -108,20 +108,44 @@ class dao_channel extends dao_base{
 		$sql = "SELECT 
 					channel.id, 
 					channel.name, 
+					channel.view, 
 					substring(channel.name, locate('@', channel.name) + 1) as network,
-					COALESCE(log_count.cnt,0) as cnt 
+					(
+						SELECT 
+              UNIX_TIMESTAMP(log.created_on)
+						FROM log
+						WHERE log.id = (SELECT MAX(log.id) FROM log WHERE channel.id = log.channel_id)
+					) as lastupdate,
+					(
+						SELECT 
+							count(log.id) as cnt 
+						FROM log
+						WHERE channel.readed_on < log.created_on 
+					) as cnt
+				FROM channel";
+		$sql = "SELECT 
+					channel.id, 
+					channel.name, 
+					channel.view, 
+					substring(channel.name, locate('@', channel.name) + 1) as network,
+					COALESCE(log_count.cnt,0) as cnt,
+					(
+						SELECT 
+              UNIX_TIMESTAMP(log.created_on)
+						FROM log
+						WHERE log.id = (SELECT MAX(log.id) FROM log WHERE channel.id = log.channel_id)
+					) as lastupdate
 				FROM channel 
 					LEFT JOIN (
 						SELECT 
-							channel.id, 
-							count(*) as cnt 
+							channel.id,
+							count(channel.id) as cnt 
 						FROM channel 
 							LEFT JOIN log ON channel.id = log.channel_id 
 						WHERE channel.readed_on < log.created_on 
 						GROUP BY channel.id
-					) as log_count ON channel.id = log_count.id 
-				WHERE view = ?";
-		$values = array(1);
+					) as log_count ON channel.id = log_count.id";
+		$values = array();
 
 		if( !empty($server) ){
 			$sql .= " WHERE name like ? ";
