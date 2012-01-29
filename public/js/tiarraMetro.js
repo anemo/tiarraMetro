@@ -685,17 +685,12 @@ $(function(){
 			var result =  '<div id="'+log.id+'" type="'+(log.is_notice == 1?'notice':'privmsg')+'" class="line text" nick="'+log.nick+'" alternate="'+(self.variable.alternate?'odd':'even')+'" highlight="'+(log.pickup?'true':'false')+'" >';
 			searchFlag = (searchFlag==undefined?false:searchFlag);
 			/* 検索の場合はチャンネルも記述する */
-      var time, unixtime;
 			if( searchFlag ){
 				result += '<span class="channel">'+log.channel_name+'</span>';
-				time = log.time.substring(log.time.indexOf('-') + 1, log.time.lastIndexOf(' ')) + ' ' + 
-               log.time.substring(log.time.indexOf(' ')+1,log.time.lastIndexOf(':'));
-			}else{
-        var currentTime = parseInt(+new Date / 1000);  // Gets the current unixtime.
-        var offset = self.timeOffset_ || 0;
-        unixtime = parseInt(log.time) + offset;
-        time = getHumanFriendlyTime(currentTime - unixtime);
 			}
+      var offset = self.timeOffset_ || 0;
+      var unixtime = parseInt(log['time']) + offset;
+      var time = getHumanFriendlyTime(unixtime);
 
 			//time
 			result += '<span class="time" time="' + unixtime + '">' + time + '</span>';
