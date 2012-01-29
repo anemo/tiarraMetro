@@ -10,7 +10,7 @@
 <!-- meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" / -->
 <link rel="apple-touch-icon" href="./images/apple-touch-icon.png" />
 <!-- link rel="apple-touch-icon" href="apple-touch-icon-precomposed.png" / -->
-<base href="<?php print $uri_base; ?>">
+<base href="<?php print $options->mountPoint; ?>/">
 <title><?php echo TiarraWEB::$page_title; ?></title>
 <link type="text/css" rel="stylesheet" href="css/jquery.metro.css" />
 <link type="text/css" rel="stylesheet" href="css/jquery.jgrowl.css" />
