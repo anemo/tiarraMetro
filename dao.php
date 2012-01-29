@@ -153,6 +153,7 @@ class dao_channel extends dao_base{
 		}
 
 		$order = $this->detectOrder($sort);
+		$order = " ORDER BY lastupdate ASC";
 		if (!empty($order)) {
 			$sql .= $order;
 		}

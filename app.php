@@ -27,8 +27,8 @@
 			$max_id = 0;
 
 			$max_id = $this->db->log->getMaxID();
-			foreach( $this->db->channel->getUnreadList( '', $this->options->channel_list_sort ) as $ch ){
-				$channel_list[$ch['id']] = $ch;
+			$channel_list = $this->db->channel->getUnreadList( '', $this->options->channel_list_sort );
+			foreach( $channel_list as $ch ){
 				$log_list[$ch['id']] = $this->logFilter( $this->db->log->getLog($ch['id']) );
 				if( $default_channel_id == $ch['id'] ){ $default_channel[ 'name' ] = $ch['name']; }
 			}

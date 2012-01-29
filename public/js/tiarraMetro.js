@@ -27,6 +27,27 @@ $(function(){
 
 	var Class = function(){ return function(){this.initialize.apply(this,arguments)}};
 
+	var ChannelModel = function(channels) {
+    this.array_ = channels;
+  }
+	ChannelModel.prototype = {
+    array_: new Array(),
+    get length() {
+      return this.array_.length;
+    },
+    item: function(i) {
+      return this.array_[i];
+    },
+    itemById: function(id) {
+      for (var i = 0; i < this.array_.length; i++) {
+          if (this.array_[i]['id'] == id)
+          return this.array_[i];
+      }
+      console.exception();
+    }
+
+  };
+
 	var TiarraMetroClass = new Class();
 
 	TiarraMetroClass.prototype = {
@@ -36,7 +57,7 @@ $(function(){
 			this.currentChannel = param.default_channel.id <0?null:param.default_channel.id;
 			this.currentMenu = null;
 			this.chLogs = param.chLogs;
-			this.channels = param.channels;
+			this.channels = new ChannelModel(param.channels);
 			this.updating = param.updating;
 			this.sending = false;
 			this.jsConf = param.jsConf;
@@ -58,8 +79,8 @@ $(function(){
 			var self = this;
 
       /* チャンネルの選択 */
-      for (var id in this.channels) {
-        var ch = this.channels[id];
+      for (var i = 0; i < this.channels.length; i++) {
+        var ch = this.channels.item(i);
         var is_visible = ch['view'] - 0;  // ch['view'] is String Object.
         this.addChannel(ch['id'], ch['name'], is_visible);
       }
@@ -172,8 +193,8 @@ $(function(){
 					type:'POST',
 					success:function(json){
 						$('#search_result_message').text('search result '+json.length);
-						if( json.length	){
-							$.each( json, function(i,log){ self.add_result(i,log); } ); 
+						if( json.length ){
+							$.each( json.reverse(), function(i,log){ self.add_result(i,log); } ); 
 						}
 						self.addCloseButton();
 
@@ -559,9 +580,9 @@ $(function(){
 					if( json['update'] ){
 						$.each( json['logs'], function(channel_id, logs){
 
-            //新しいチャンネルの場合
-            if (!$('#ch_' + channel_id).length)
-                this.addChannel(channel_id, null, true);
+              //新しいチャンネルの場合
+              if (!$('#ch_' + channel_id).length)
+                  this.addChannel(channel_id, null, true);
 
 							/* 設定のロード */
 							setting = self.getChannelSettings( channel_id );
@@ -608,6 +629,18 @@ $(function(){
 								}
 							}
 
+              var time_element = $('#time_ch_' + channel_id);
+              if (time_element) {
+                var current_last_update = parseInt(time_element.attr('time'));
+                var new_time = logs[0]['time'];
+                if (current_last_update < new_time)
+                  time_element.attr('time', new_time);
+
+                var ch_element = $('#ch_' + channel_id);
+
+                ch_element.remove();
+                $('ul.channel_list').prepend(ch_element);
+              }
 
 							/* 選択中のチャンネルの場合、domへの流し込みを行う */
 							if( channel_id == self.currentChannel ){
@@ -925,15 +958,29 @@ $(function(){
       if ($('#ch_' + channel_id).length)
         return;
 
-      var ch = this.channels[channel_id];
+      var ch = this.channels.itemById(channel_id);
       var lastupdate = ch['lastupdate'];
-
-      var html = '<li id="ch_' + channel_id + '" >';
-      html += '<span class="ch_name">new channel</span>';
-      html += '<span class="ch_num"></span>';
       var time = getHumanFriendlyTime(lastupdate);
-      html += '<span class="time" time="' + lastupdate + '">' + time + '</span>';
-      html += '</li>';
+
+      var html = $(document.createElement('li'))
+                     .attr('id', 'ch_' + channel_id);
+
+      $(document.createElement('span'))
+          .attr('class', 'ch_name')
+          .text('new channel')
+          .appendTo(html);
+
+      $(document.createElement('span'))
+          .attr('class', 'ch_num')
+          .appendTo(html);
+
+      $(document.createElement('span'))
+          .attr('class', 'time')
+          .attr('id', 'time_ch_' + channel_id)
+          .attr('time', lastupdate)
+          .text(time)
+          .appendTo(html);
+
       $('ul.channel_list').prepend(html);
 
       if (is_visible) {
