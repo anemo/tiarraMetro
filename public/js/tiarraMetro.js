@@ -716,6 +716,7 @@ $(function(){
 			/* 検索の場合はチャンネルも記述する */
 			if( searchFlag ){
 				result += '<span class="channel">'+log.channel_name+'</span>';
+      }
       var offset = self.timeOffset_ || 0;
       var unixtime = parseInt(log['time']) + offset;
       var time = getHumanFriendlyTime(unixtime);
