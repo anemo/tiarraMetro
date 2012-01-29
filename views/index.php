@@ -1,26 +1,13 @@
 <div class="metro-pivot">
 <div class='pivot-item' name="list">
 	<h3><?php print $options->channel_list_label; ?></h3>
-	<ul class="channel_list">
-	<?php foreach( $channels as $ch ){ ?>
-	<li id="ch_<?php print $ch['id']; ?>" class="<?php if($ch['cnt']>0){ print "new"; } ?>"><span class="ch_name"><?php print $ch['name']; ?></span>&nbsp;
-		<span class="ch_num">
-		<?php if( !empty($ch['cnt']) ){ ?>
-		<small><?php print $ch['cnt']; ?></small>
-		<?php } ?>
-		</span>
-	</li>
-	<?php } ?>
-	</ul>
+  <ul class="channel_list"></ul>
 	<div class="search">
 		<h4>search</h4>
 		<form method="POST" id="search_form" role="search">
 			<input type="text" name="word"  id="keyword" />
 			<select name="channel" id="channel_select">
 				<option value="" >----</option>
-				<?php foreach( $channels as $ch ){ ?>
-					<option value="<?php print $ch['id']; ?>"><?php print $ch['name']; ?></option>
-				<?php } ?>
 			</select>
 			<input type="submit" id="search" name="search" value='search' />
 		</form>
@@ -61,9 +48,6 @@
 		<form id="setting_form" >
 			<select name="channel" id="channel_setting_select" >
 				<option value="" >----</option>
-				<?php foreach( $all_channels as $ch ){ ?>
-					<option value="<?php print $ch['id']; ?>"><?php print $ch['name']; ?></option>
-				<?php } ?>
 			</select>
 			<div id="channel_setting_elements" style="display:none;" >
 			<dl>
@@ -120,6 +104,7 @@ $(function(){
 	tiarraMetro = new TiarraMetroClass({
 		max_id : '<?php print $max_id; ?>',
 		chLogs : <?php print json_encode($logs); ?>,
+		channels: <?php print json_encode($channels); ?>,
 		updating : false,
 		jsConf : <?php print json_encode($jsConf); ?>,
 		mountPoint : "<?php print $mount_point; ?>",

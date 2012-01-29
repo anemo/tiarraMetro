@@ -3,7 +3,9 @@ $(function(){
    * Returns the human-friendly formatted time string.
    * @param {integer} seconds
    */
-  function getHumanFriendlyTime(secondOffset) {
+  function getHumanFriendlyTime(targetTime, currentTime) {
+    currentTime = currentTime || parseInt(+new Date / 1000);  // Gets the current unixtime.
+    var secondOffset = currentTime - targetTime;
     if (secondOffset < 5)
       return "now";
     else if (secondOffset < 60)
@@ -25,6 +27,27 @@ $(function(){
 
 	var Class = function(){ return function(){this.initialize.apply(this,arguments)}};
 
+	var ChannelModel = function(channels) {
+    this.array_ = channels;
+  }
+	ChannelModel.prototype = {
+    array_: new Array(),
+    get length() {
+      return this.array_.length;
+    },
+    item: function(i) {
+      return this.array_[i];
+    },
+    itemById: function(id) {
+      for (var i = 0; i < this.array_.length; i++) {
+          if (this.array_[i]['id'] == id)
+          return this.array_[i];
+      }
+      console.exception();
+    }
+
+  };
+
 	var TiarraMetroClass = new Class();
 
 	TiarraMetroClass.prototype = {
@@ -34,6 +57,7 @@ $(function(){
 			this.currentChannel = param.default_channel.id <0?null:param.default_channel.id;
 			this.currentMenu = null;
 			this.chLogs = param.chLogs;
+			this.channels = new ChannelModel(param.channels);
 			this.updating = param.updating;
 			this.sending = false;
 			this.jsConf = param.jsConf;
@@ -50,10 +74,17 @@ $(function(){
 
 			this.keymappingInitialize( param.jsConf[ 'keymapping' ] );
 		},
+
 		htmlInitialize: function( param ){
 			var self = this;
 
-			/* チャンネルの選択 */
+      /* チャンネルの選択 */
+      for (var i = 0; i < this.channels.length; i++) {
+        var ch = this.channels.item(i);
+        var is_visible = ch['view'] - 0;  // ch['view'] is String Object.
+        this.addChannel(ch['id'], ch['name'], is_visible);
+      }
+
 			$("ul.channel_list").on("click", "li", function() {
 				channel_id = this.id.substring(3);
 				channel_name = self.getChannelName(channel_id);
@@ -162,8 +193,8 @@ $(function(){
 					type:'POST',
 					success:function(json){
 						$('#search_result_message').text('search result '+json.length);
-						if( json.length	){
-							$.each( json, function(i,log){ self.add_result(i,log); } ); 
+						if( json.length ){
+							$.each( json.reverse(), function(i,log){ self.add_result(i,log); } ); 
 						}
 						self.addCloseButton();
 
@@ -549,23 +580,9 @@ $(function(){
 					if( json['update'] ){
 						$.each( json['logs'], function(channel_id, logs){
 
-							//新しいチャンネルの場合
-							if(! $('#ch_'+channel_id).length ){
-								$('ul.channel_list').prepend('<li id="ch_'+channel_id+'" ><span class="ch_name">new channel</span>&nbsp;'+'<span class="ch_num"></span></li>');
-
-								self.chLogs[ channel_id ] = new Array();
-
-								$.ajax({
-									url:self.mountPoint+'/api/channel/name/'+channel_id,
-									dataType:'json',
-									type:'POST',
-									success:function(chData){
-										$('#ch_'+chData.id+' span.ch_name').text( chData.name );
-									},
-								});
-
-								//todo: settingのチャンネル一覧に追加
-							}
+              //新しいチャンネルの場合
+              if (!$('#ch_' + channel_id).length)
+                  this.addChannel(channel_id, null, true);
 
 							/* 設定のロード */
 							setting = self.getChannelSettings( channel_id );
@@ -612,6 +629,18 @@ $(function(){
 								}
 							}
 
+              var time_element = $('#time_ch_' + channel_id);
+              if (time_element) {
+                var current_last_update = parseInt(time_element.attr('time'));
+                var new_time = logs[0]['time'];
+                if (current_last_update < new_time)
+                  time_element.attr('time', new_time);
+
+                var ch_element = $('#ch_' + channel_id);
+
+                ch_element.remove();
+                $('ul.channel_list').prepend(ch_element);
+              }
 
 							/* 選択中のチャンネルの場合、domへの流し込みを行う */
 							if( channel_id == self.currentChannel ){
@@ -687,7 +716,6 @@ $(function(){
 			/* 検索の場合はチャンネルも記述する */
 			if( searchFlag ){
 				result += '<span class="channel">'+log.channel_name+'</span>';
-			}
       var offset = self.timeOffset_ || 0;
       var unixtime = parseInt(log['time']) + offset;
       var time = getHumanFriendlyTime(unixtime);
@@ -805,7 +833,7 @@ $(function(){
       var currentTime = parseInt(+new Date / 1000);  // Gets the current unixtime.
       $("span.time").each(function(i, elem){
           var unixtime = parseInt(elem.getAttribute('time'));
-          elem.textContent = getHumanFriendlyTime(currentTime - unixtime); });
+          elem.textContent = getHumanFriendlyTime(unixtime, currentTime); });
       setTimeout(this.updateTime.bind(this), TIME_UPDATE_INTERVAL);
     },
 		getIconString : function ( log ){
@@ -920,6 +948,64 @@ $(function(){
 			});
 			$('div#search_foot').html(button);
 		},
+    
+    addChannel: function(channel_id, name, is_visible) {
+      if ($('#ch_' + channel_id).length)
+        return;
+
+      var ch = this.channels.itemById(channel_id);
+      var lastupdate = ch['lastupdate'];
+      var time = getHumanFriendlyTime(lastupdate);
+
+      var html = $(document.createElement('li'))
+                     .attr('id', 'ch_' + channel_id);
+
+      $(document.createElement('span'))
+          .attr('class', 'ch_name')
+          .text('new channel')
+          .appendTo(html);
+
+      $(document.createElement('span'))
+          .attr('class', 'ch_num')
+          .appendTo(html);
+
+      $(document.createElement('span'))
+          .attr('class', 'time')
+          .attr('id', 'time_ch_' + channel_id)
+          .attr('time', lastupdate)
+          .text(time)
+          .appendTo(html);
+
+      $('ul.channel_list').prepend(html);
+
+      if (is_visible) {
+        $(document.createElement('option'))
+          .attr('value', channel_id)
+          .text(name)
+          .appendTo('select#channel_select');
+      }
+
+      $(document.createElement('option'))
+        .attr('value', channel_id)
+        .text(name)
+        .appendTo('select#channel_setting_select');
+
+      if (name) {
+        $('#ch_' + channel_id + ' span.ch_name').text(name);
+      } else {
+        $.ajax({
+          url: this.mountPoint + '/api/channel/name/' + channel_id,
+          dataType: 'json',
+          type: 'POST',
+          success: function(chData) {
+              $('#ch_' + chData.id + ' span.ch_name').text(chData.name);
+          },
+        });
+      }
+
+      //todo: settingのチャンネル一覧に追加
+    },
+
 		onListInvisible: function(){
 			if( $('ul.channel_list li.new').length || $('ul.channel_list li.hit').length ){
 				$('div.headers span.header[name="list"]').addClass('closed');

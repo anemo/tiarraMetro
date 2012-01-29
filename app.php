@@ -27,8 +27,8 @@
 			$max_id = 0;
 
 			$max_id = $this->db->log->getMaxID();
-			foreach( $this->db->channel->getUnreadList( '', $this->options->channel_list_sort ) as $ch ){
-				$channel_list[$ch['id']] = $ch;
+			$channel_list = $this->db->channel->getUnreadList( '', $this->options->channel_list_sort );
+			foreach( $channel_list as $ch ){
 				$log_list[$ch['id']] = $this->logFilter( $this->db->log->getLog($ch['id']) );
 				if( $default_channel_id == $ch['id'] ){ $default_channel[ 'name' ] = $ch['name']; }
 			}
@@ -71,7 +71,14 @@
 			return $this->channel_select( $this->db->channel->getID( "#".$channel_name ) );
 		}
 
-		//api
+    //api
+    public function api_channel_list() {
+      if (!$this->isLoggedIn()) {
+        return json_encode(array('error' => true, 'msg' => 'no login.'));
+      }
+      return json_encode($this->db->channel->getList());
+    }
+
 		public function api_logs( ){
 			if( !$this->isLoggedIn() ){ $return = array( 'error' => true, 'msg' => 'no login.' ); }
 			else{
@@ -321,9 +328,10 @@
 	$app->post_and_get('/login','login' );
 	$app->get('/logout','logout' );
 
-	$app->get('/channel/:channel_name','channel_name_select',array('channel_name'=>'.*'));
+  $app->get('/channel/:channel_name', 'channel_name_select',array('channel_name'=>'.*'));
 	
 	//api
+  $app->post('/api/channel_list', 'api_channel_list');
 	$app->post('/api/logs/','api_logs');
 	$app->post('/api/logs/:channel_id','api_next', array('channel_id'=>'\d+' ));
 	$app->post('/api/post/','api_post');
