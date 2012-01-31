@@ -1,3 +1,4 @@
+<!-- -*- mode: HTML; -*- -->
 <!DOCTYPE html> 
 <html lang="ja">
 <head>
@@ -8,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <!-- meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" / -->
+<link rel="shortcut icon" href="./images/apple-touch-icon.png" />
 <link rel="apple-touch-icon" href="./images/apple-touch-icon.png" />
 <!-- link rel="apple-touch-icon" href="apple-touch-icon-precomposed.png" / -->
 <base href="<?php print $options->mountPoint; ?>/">

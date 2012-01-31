@@ -1,3 +1,4 @@
+<!-- -*- mode: HTML; -*- -->
 <div class="metro-pivot">
 <div class='pivot-item' name="list">
 	<h3><?php print $options->channel_list_label; ?></h3>
