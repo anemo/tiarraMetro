@@ -1,3 +1,4 @@
+// -*- mode:javascript -*-
 // vim: ts=2 sw=2 sts=2 tw=80 et wrap ff=unix ft=javascript fenc=utf8 :
 
 $(function(){
@@ -86,6 +87,7 @@ $(function(){
       /* チャンネルの選択 */
       for (var i = 0; i < this.channels.length; i++) {
         var ch = this.channels.item(i);
+        ch['name'] = ch['name'].replace(/sex/, 'nyan');
         var is_visible = ch['view'] - 0;  // ch['view'] is String Object.
         this.addChannel(ch['id'], ch['name'], is_visible);
       }
