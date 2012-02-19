@@ -45,7 +45,6 @@
 				array(
 					'max_id' => $max_id,
 					'channels' => $channel_list,
-					'all_channels' => $this->db->channel->getList(),
 					'logs' => $log_list,
 					'pivot' => $pivot,
 					'default_channel' => $default_channel,
@@ -130,7 +129,11 @@
 							}
 							$return = array( 'error' => false );
 
-							$ok = $this->db->log->postLog( $this->request->post, $this->request->channel_id, $this->db->nick->getID( $this->options->my_name ), $this->request->notice );
+              $ok = $this->db->log->postLog(
+                  $this->request->post,
+                  $this->request->channel_id,
+                  $this->db->nick->getID( $this->options->my_name ),
+                  $this->request->notice );
 							if( $ok !== true ){
 								$return = array( 'error' => true, 'msg' => $ok );
 							}
@@ -220,7 +223,13 @@
 
 						//set cookie
 						if( $this->request->cookie == 'true' )
-							Cookie::set('UniqueId',$this->options->my_name,$this->options->password_md5,time()+$this->options->cookie_save_time, $this->options->mountPoint.'/' );
+              Cookie::set(
+                'UniqueId',
+                $this->options->my_name,
+                $this->options->password_md5,
+                time() + $this->options->cookie_save_time,
+                $this->options->mountPoint.'/',
+                $this->options->host);
 
 						//セッションにログイン前ページが記憶されてるかどうかを判定
 						if( isset($this->session->befor) && strlen($this->session->befor) ){
@@ -252,7 +261,10 @@
 		public function logout(){
 			if($this->isLoggedIn()){
 				$this->session->login = null;
-				Cookie::delete('UniqueId',$this->options->mountPoint.'/' );
+        Cookie::delete(
+          'UniqueId',
+          $this->options->mountPoint.'/',
+          $this->options->host);
 			}
 
 			$this->redirect('/');
@@ -263,7 +275,13 @@
  		private function isLoggedIn() {
 			if( empty($this->options->password_md5) ){ return true; }
 			if( Cookie::get('UniqueId', $this->options->password_md5 ) == $this->options->my_name ){
-				Cookie::set('UniqueId',$this->options->my_name,$this->options->password_md5,time()+$this->options->cookie_save_time, $this->options->mountPoint.'/' );
+        Cookie::set(
+          'UniqueId',
+          $this->options->my_name,
+          $this->options->password_md5,
+          time() + $this->options->cookie_save_time,
+          $this->options->mountPoint . '/',
+          $this->options->host);
 				return true;
 			}
 			return !is_null($this->session->login);
